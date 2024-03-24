@@ -8,7 +8,6 @@ from PIL import ImageGrab, Image
 from collections import Counter
 import numpy as np
 
-
 # Function to click at specified coordinates
 def click(x, y):
     win32api.SetCursorPos((x, y))
@@ -64,12 +63,12 @@ video_writer = None
 
 def video():
     video_writer = cv2.VideoWriter('output_video.mp4', cv2.VideoWriter_fourcc(*'mp4v'), fps, (video_width, video_height))
-# Search for the board image and fruit image within the region of the board
+
 # Search for the board image and fruit image within the region of the board
 while True:
     try:
         # Find the board image
-        if found == False:
+        if not found:
             if not pyautogui.locateOnScreen('start.png', confidence=0.5):
                 print("Board not found on the screen")
                 continue
@@ -84,36 +83,72 @@ while True:
             found = True
             video()
             print("found")
+
+
+
+
         else:
-
-
+            # Search for the fruit image within the cropped region of the board
             screenshot = ImageGrab.grab(
-                bbox=(left + width * 0.1, top + height * 0.2, left + int(width * 0.9), top + int(height * 0.9)))
+                bbox=(left + width * 0.2, top + height * 0.2, left + int(width * 0.8), top + int(height * 0.8)))
+
+            # Convert the screenshot to a numpy array for efficient processing
             screenshot_np = np.array(screenshot)
 
+            # Classify pixels as background or fruit based on brightness
             background_pixels = classify_pixels(screenshot_np)
 
-
+            # Create a black canvas of the same size as the original image
             black_canvas = np.zeros_like(screenshot_np)
 
+            # Fill the black canvas with the original image except for the background pixels
             black_canvas[background_pixels] = screenshot_np[background_pixels]
+
             print("frame")
+
+            # Convert to BGR color space for displaying
             bgr_black_canvas = cv2.cvtColor(black_canvas, cv2.COLOR_RGB2BGR)
 
+            # Display the frame
             cv2.imshow('Frame', bgr_black_canvas)
             cv2.moveWindow('Frame', 1000, 500)
-            cv2.waitKey(1)
+
+            # Set the initial cursor position to the leftmost side of the region
+            cursor_x = left + int(width * 0.2)
+            cursor_y = top + int(height * 0.5)  # Center of the region vertically
+
+            # Set initial state for mouse button
+            is_mouse_down = False
+
+            # Continuous fast swiping of the mouse pointer from left to right
+            cursor_x = left + int(width * 0.2)  # Start from the leftmost side
+            cursor_y = top + int(height * 0.5)  # Center of the region vertically
+
+            while cursor_x < left + int(width * 0.8):
+                try:
+                    # Check if the current pixel is black
+                    if np.all(black_canvas[cursor_y - top, cursor_x - left] != [0, 0, 0]):
+                        # Move the cursor to the next position
+                        win32api.SetCursorPos((cursor_x, cursor_y))
+
+                        # Perform mouse click action
+                        win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, cursor_x, cursor_y, 0, 0)
+                    else:
+                        win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, cursor_x, cursor_y, 0, 0)
+                except IndexError:
+                    pass
+                cursor_x += 100  # Adjust the speed of swiping as needed
+                time.sleep(0.01)
+
+                    # Check for key press to stop the script
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+
 
             # Write the frame to the video
 
-
     except ImageNotFoundException as e:
         print("Image not found:", e)
-
-    except KeyboardInterrupt:
-        # If the script is stopped, release the VideoWriter object
-        print("Script stopped. Generating video...")
-        break
 
 # Release the VideoWriter object
 video_writer.release()
