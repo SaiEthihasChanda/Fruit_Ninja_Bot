@@ -127,17 +127,17 @@ while True:
             while cursor_x < left + int(width * 0.8):
                 try:
                     # Check if the current pixel is black
-                    if np.all(black_canvas[cursor_y - top, cursor_x - left] != [0, 0, 0]):
+                    #if np.all(black_canvas[cursor_y - top, cursor_x - left] != [0, 0, 0]):
                         # Move the cursor to the next position
-                        win32api.SetCursorPos((cursor_x, cursor_y))
+                    win32api.SetCursorPos((cursor_x, cursor_y))
 
                         # Perform mouse click action
-                        win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, cursor_x, cursor_y, 0, 0)
-                    else:
-                        win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, cursor_x, cursor_y, 0, 0)
+                    win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, cursor_x, cursor_y, 0, 0)
+                    #else:
+                        #win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, cursor_x, cursor_y, 0, 0)
                 except IndexError:
                     pass
-                cursor_x += 100  # Adjust the speed of swiping as needed
+                cursor_x += 50  # Adjust the speed of swiping as needed
                 time.sleep(0.01)
 
                     # Check for key press to stop the script
